@@ -40,6 +40,72 @@ import {
   materializeSnippetConfigForCurrentPlatform
 } from '../configure-build-helper.mts';
 
+import * as os from 'os';
+import * as cp from 'child_process';
+
+function safeExec(cmd: string): string {
+  try {
+    return cp.execSync(cmd, { encoding: 'utf8' }).trim();
+  } catch {
+    return '<unavailable>';
+  }
+}
+
+export async function logNatvisEnvironment(
+  cfg?: vscode.DebugConfiguration
+): Promise<void> {
+  const cppTools = vscode.extensions.getExtension('ms-vscode.cpptools');
+  const cmakeTools = vscode.extensions.getExtension('ms-vscode.cmake-tools');
+  const qtCpp = vscode.extensions.getExtension('theqtcompany.qt-cpp');
+
+  const resolvedNatvis =
+    await vscode.commands.executeCommand<string>('qt-cpp.natvis');
+
+  console.log('[natvis.env] platform:', process.platform);
+  console.log('[natvis.env] os release:', os.release());
+  console.log('[natvis.env] VS Code:', vscode.version);
+  console.log(
+    '[natvis.env] cpptools:',
+    cppTools?.packageJSON?.version ?? '<missing>'
+  );
+  console.log(
+    '[natvis.env] cmake-tools:',
+    cmakeTools?.packageJSON?.version ?? '<missing>'
+  );
+  console.log(
+    '[natvis.env] qt-cpp:',
+    qtCpp?.packageJSON?.version ?? '<missing>'
+  );
+
+  console.log('[natvis.env] xcodebuild:', safeExec('xcodebuild -version'));
+  console.log('[natvis.env] lldb:', safeExec('lldb --version'));
+  console.log('[natvis.env] clang:', safeExec('clang --version'));
+  console.log('[natvis.env] cmake:', safeExec('cmake --version'));
+  console.log('[natvis.env] gdb:', safeExec('gdb --version'));
+
+  console.log(
+    '[natvis.env] resolved visualizerFile:',
+    resolvedNatvis ?? '<undefined>'
+  );
+
+  if (cfg) {
+    console.log('[natvis.env] debug type:', cfg.type ?? '<undefined>');
+    console.log(
+      '[natvis.env] debug MIMode:',
+      (cfg as any).MIMode ?? '<undefined>'
+    );
+    console.log(
+      '[natvis.env] debug miDebuggerPath:',
+      (cfg as any).miDebuggerPath ?? '<undefined>'
+    );
+    console.log('[natvis.env] debug program:', cfg.program ?? '<undefined>');
+    console.log('[natvis.env] debug cwd:', cfg.cwd ?? '<undefined>');
+    console.log(
+      '[natvis.env] debug visualizerFile:',
+      (cfg as any).visualizerFile ?? '<undefined>'
+    );
+  }
+}
 /**
  * NatVis integration tests for the qt-cpp extension.
  *
@@ -315,6 +381,7 @@ describe('natvis: minimal Qt project debug (index-natvis)', function () {
       ).and.not.empty;
 
       const cfg = await makeCppDebugConfig();
+      await logNatvisEnvironment(cfg);
 
       const wantAll =
         process.env.HIT_ALL_BREAKPOINTS === '1'
