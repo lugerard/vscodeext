@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * Debug-session utilities for qt-cpp NatVis integration tests.
@@ -137,8 +138,34 @@ export async function makeCppDebugConfig(): Promise<vscode.DebugConfiguration> {
   const cwd = await vscode.commands.executeCommand<string>(
     'cmake.getLaunchTargetDirectory'
   );
-  const visualizerFile =
+  // const visualizerFile =
+  //   await vscode.commands.executeCommand<string>('qt-cpp.natvis');
+  const originalNatvis =
     await vscode.commands.executeCommand<string>('qt-cpp.natvis');
+
+  if (!originalNatvis) {
+    throw new Error('qt-cpp.natvis did not resolve to a NatVis file path.');
+  }
+  // Example:
+  // original: .../natvis/qt6.natvis
+  // target:   .../natvis_testing/qt6.natvis
+
+  const dir = path.dirname(originalNatvis);
+  const file = path.basename(originalNatvis);
+
+  // Replace only the last "natvis" folder
+  const parentDir = path.dirname(dir);
+  const newDir = path.join(parentDir, 'natvis_testing');
+
+  const visualizerFile = path.join(newDir, file);
+
+  if (!fs.existsSync(visualizerFile)) {
+    throw new Error(
+      `Testing NatVis file not found.\n` +
+        `Original: ${originalNatvis}\n` +
+        `Expected: ${visualizerFile}`
+    );
+  }
 
   if (!program || !cwd) {
     throw new Error(
