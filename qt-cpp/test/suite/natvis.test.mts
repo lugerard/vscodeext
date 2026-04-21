@@ -385,6 +385,9 @@ describe('natvis: minimal Qt project debug (index-natvis)', function () {
         return !noiseTopLevel.has(top);
       });
 
+      const qUrlSnapshot = snapshot.find((v) => v.name === 'coreTypes.qUrl');
+      console.log('[natvis.test] coreTypes.qUrl snapshot:', JSON.stringify(qUrlSnapshot, null, 2));
+
       //   Read NatVis + compute which snapshot types are actually covered
       const natvisPath = nvPath; // you already computed this earlier
       const natvis = await parseNatvisTypesWithAlternatives(natvisPath);
