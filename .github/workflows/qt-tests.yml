@@ -122,6 +122,35 @@ jobs:
                     matrix.os == 'macos-latest'   && 'clang_64'          || 'linux_gcc_64' }}
           dir: ${{ github.workspace }}
           cache: true
+          modules: ${{ matrix.os == 'windows-latest' && 'debug_info' || '' }}
+
+      - name: PDB presence check (Windows only)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $qtRoot = "${{ github.workspace }}\Qt"
+          Write-Host "=== PDB inventory under $qtRoot ==="
+
+          $pdbs = Get-ChildItem -Path $qtRoot -Recurse -Filter "*.pdb" -ErrorAction SilentlyContinue
+          $count = ($pdbs | Measure-Object).Count
+          $totalBytes = ($pdbs | Measure-Object -Property Length -Sum).Sum
+
+          Write-Host "PDB count : $count"
+          if ($totalBytes) {
+            Write-Host "Total size: $([math]::Round($totalBytes / 1MB, 2)) MB ($totalBytes bytes)"
+          } else {
+            Write-Host "Total size: 0 (no PDB files found)"
+          }
+          Write-Host ""
+          Write-Host "=== Full PDB list (path, size in KB) ==="
+          if ($count -gt 0) {
+            $pdbs | Sort-Object FullName | ForEach-Object {
+              $kb = [math]::Round($_.Length / 1KB, 1)
+              Write-Host "$($_.FullName)  ($kb KB)"
+            }
+          } else {
+            Write-Host "(none)"
+          }
 
       - name: Set QT_TEST_QT_ROOT (and show Qt install overview)
         shell: bash
@@ -170,6 +199,8 @@ jobs:
           fi
 
       - name: Run tests (all OS-selected suites)
+        env:
+          NATVIS_SHOW_SUMMARY: '1'
         shell: bash
         run: |
           set -euo pipefail
