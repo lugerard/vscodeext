@@ -385,6 +385,24 @@ describe('natvis: minimal Qt project debug (index-natvis)', function () {
         return !noiseTopLevel.has(top);
       });
 
+      // ---- Display dump: print actual debugger values for every exercised type ----
+      {
+        console.log('=== DISPLAY DUMP ===');
+        for (const entry of snapshot) {
+          console.log(
+            `DUMP | type=${entry.type ?? '<unknown>'} | var=${entry.name} | value=${entry.value ?? '<empty>'}`
+          );
+          if (entry.children && entry.children.length > 0) {
+            for (const child of entry.children) {
+              console.log(
+                `DUMP |   child=${child.name} | value=${child.value ?? '<empty>'}`
+              );
+            }
+          }
+        }
+        console.log('=== END DISPLAY DUMP ===');
+      }
+
       //   Read NatVis + compute which snapshot types are actually covered
       const natvisPath = nvPath; // you already computed this earlier
       const natvis = await parseNatvisTypesWithAlternatives(natvisPath);
