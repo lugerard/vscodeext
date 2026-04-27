@@ -139,6 +139,23 @@ jobs:
           echo "Directory tree (maxdepth 3) under $QT_ROOT:"
           find "$QT_ROOT" -maxdepth 3 -type d -print
 
+      - name: Check PDB files in Qt installation
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          QT_ROOT="${{ github.workspace }}/Qt"
+          echo "=== PDB CHECK ==="
+          echo "Searching for .pdb files under $QT_ROOT ..."
+          PDB_COUNT=$(find "$QT_ROOT" -name "*.pdb" 2>/dev/null | wc -l | tr -d ' ')
+          echo "PDB file count: $PDB_COUNT"
+          if [[ "$PDB_COUNT" -gt 0 ]]; then
+            echo "PDB files PRESENT — first 20:"
+            find "$QT_ROOT" -name "*.pdb" 2>/dev/null | head -20
+          else
+            echo "PDB files ABSENT"
+          fi
+          echo "=== END PDB CHECK ==="
+
       - name: Verify Designer is available (qt-ui only)
         if: env.TEST_SUITE == 'all' || env.TEST_SUITE == 'qt-ui'
         shell: bash
