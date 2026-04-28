@@ -162,7 +162,9 @@ export async function makeCppDebugConfig(): Promise<vscode.DebugConfiguration> {
     stopAtEntry: true,
     console: 'internalConsole',
     externalConsole: false,
-    showDisplayString: true
+    showDisplayString: true,
+    // Emit DLL load/symbol-load events, engine diagnostics and NatVis evaluation (Windows only)
+    ...(isWin ? { logging: { moduleLoad: true, engineLogging: true, natvisDiagnostics: true } } : {})
   };
 
   // Non-Windows: set MI mode, and on Linux also force the debugger path.
@@ -268,6 +270,14 @@ export async function startDebugAndWaitForStop(
       createDebugAdapterTracker: (s) => {
         session = s;
         const onMessageSend = async (m: any) => {
+          if (m?.event === 'output') {
+            const output: string = m?.body?.output ?? '';
+            const category: string = m?.body?.category ?? '';
+            if (output.trim()) {
+              console.log(`MODULE-LOAD | [${category}] ${output.trim()}`);
+            }
+          }
+
           if (m?.event === 'stopped') {
             const reason: string | undefined = m?.body?.reason;
             let tid: number | undefined = m?.body?.threadId;
