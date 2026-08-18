@@ -59,7 +59,7 @@ async function main() {
       // the breakpoint. Workarounds (empty DEBUGINFOD_URLS, "set debuginfod
       // enabled off") were reported insufficient before this fix.
       // See https://github.com/microsoft/vscode-cpptools/issues/14458
-      { idOrVsix: 'ms-vscode.cpptools', preRelease: false },
+      { idOrVsix: 'ms-vscode.cpptools@1.32.2' },
       { idOrVsix: localQtCoreVsix }
     ];
     installRequiredExtensions(cli, args, extensions);
