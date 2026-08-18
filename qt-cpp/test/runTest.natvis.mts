@@ -18,6 +18,20 @@ const uninstallStdio = installStdioFilter();
 
 async function main() {
   try {
+    if (process.platform === 'linux') {
+      // cpptools 1.32.2 bundles a pre-#1561 MIEngine that runs
+      // "set debuginfod enabled on" unconditionally; with the debuginfod
+      // server unreachable from the runner, every gdb command then blocks
+      // on the network and the debugger never reaches the breakpoint.
+      // Clearing the URL list means gdb never attempts a connection — the
+      // same thing MIEngine#1561's disabled mode does on the gdb process.
+      // The timeout caps are belt-and-braces for any code path that
+      // re-populates the URLs. Inherited: runTests → VS Code → extension
+      // host → gdb.
+      process.env.DEBUGINFOD_URLS = '';
+      process.env.DEBUGINFOD_TIMEOUT = '1';
+      process.env.DEBUGINFOD_MAXTIME = '1';
+    }
     // The folder containing the Extension Manifest package.json
     // Passed to --extensionDevelopmentPath
     const extensionDevelopmentPath = path.resolve(__dirname, '../../');
