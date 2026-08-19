@@ -28,9 +28,17 @@ async function main() {
       // The timeout caps are belt-and-braces for any code path that
       // re-populates the URLs. Inherited: runTests → VS Code → extension
       // host → gdb.
-      process.env.DEBUGINFOD_URLS = '';
+      // Not '': the runner's profile.d/debuginfod.sh treats an empty value
+      // as unset and re-adds the (unreachable) Ubuntu server when a login
+      // shell appears anywhere in the launch chain — observed in run
+      // 32235289117. A closed localhost port is non-empty, so it survives
+      // that guard, and each query fails in microseconds instead of
+      // blocking on a dead network route.
+      process.env.DEBUGINFOD_URLS = 'http://127.0.0.1:1';
       process.env.DEBUGINFOD_TIMEOUT = '1';
       process.env.DEBUGINFOD_MAXTIME = '1';
+      console.log('[runTest] linux: DEBUGINFOD defused:',
+        process.env.DEBUGINFOD_URLS);
     }
     // The folder containing the Extension Manifest package.json
     // Passed to --extensionDevelopmentPath
